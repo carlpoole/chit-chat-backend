@@ -1,6 +1,16 @@
+const path = require('path')
 const fastify = require('fastify')({
   logger: true
 })
+
+fastify.register(require('fastify-socket.io'))
+fastify.register(require('fastify-static'), {
+  root: path.join(__dirname, 'public'),
+  prefix: '/public/',
+})
+
+const { Server } = require("socket.io");
+const io = new Server();
 
 // Connect to mongodb
 const mongoose = require('mongoose')
@@ -18,8 +28,23 @@ fastify.register(messages, { prefix: '/api/messages' })
 
 // Register default route
 fastify.get('/', function (request, reply) {
-  reply.send({ status: 'ok' })
+  return reply.sendFile('index.html')
 })
+
+fastify.ready().then(() => {
+  fastify.io.on('connection', (socket) => {
+    console.log('user connected');
+
+    socket.on('chat message', (msg) => {
+      console.log('message: ' + msg);
+      fastify.io.emit('chat message', msg);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+  });
+});
 
 // Run server
 fastify.listen(3000, function (err, address) {
