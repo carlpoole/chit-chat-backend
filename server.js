@@ -22,6 +22,8 @@ try {
   console.error(error)
 }
 
+const Message = require("./db/message")
+
 // Get and register routes
 const messages = require('./routes/messages')
 fastify.register(messages, { prefix: '/api/messages' })
@@ -33,15 +35,28 @@ fastify.get('/', function (request, reply) {
 
 fastify.ready().then(() => {
   fastify.io.on('connection', (socket) => {
-    console.log('user connected');
+    const ipAddress = socket.handshake.address;
+    console.log(`user connected: ${ipAddress}`);
 
     socket.on('chat message', (msg) => {
-      console.log('message: ' + msg);
+      console.log(`message from ${ipAddress}: ${msg}`);
+
       fastify.io.emit('chat message', msg);
+
+      const message = {
+          name: ipAddress,
+          body: msg,
+      }
+
+      Message.create(message, (err, message) => {
+        if(err) {
+          console.log({ error: err })
+        }
+      })
     });
 
     socket.on('disconnect', () => {
-      console.log('user disconnected');
+      console.log(`user disconnected: ${ipAddress}`);
     });
   });
 });
