@@ -6,7 +6,7 @@ const fastify = require('fastify')({
 fastify.register(require('fastify-socket.io'))
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public'),
-  prefix: '/public/',
+  prefix: '/',
 })
 
 const { Server } = require("socket.io");
@@ -27,11 +27,6 @@ const Message = require("./db/message")
 // Get and register routes
 const messages = require('./routes/messages')
 fastify.register(messages, { prefix: '/api/messages' })
-
-// Register default route
-fastify.get('/', function (request, reply) {
-  return reply.sendFile('index.html')
-})
 
 fastify.ready().then(() => {
   fastify.io.on('connection', (socket) => {
