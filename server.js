@@ -36,7 +36,7 @@ fastify.ready().then(() => {
     socket.on('chat message', (msg) => {
       console.log(`message from ${ipAddress}: ${msg}`);
 
-      fastify.io.emit('chat message', msg);
+      fastify.io.emit('chat message', { user: ipAddress, msg });
 
       const message = {
           name: ipAddress,
@@ -50,8 +50,13 @@ fastify.ready().then(() => {
       })
     });
 
+    socket.on('typing', (data) => {
+      fastify.io.emit('user typing', { id: data.id, user: ipAddress, isTyping: data.typing });
+    });
+
     socket.on('disconnect', () => {
       console.log(`user disconnected: ${ipAddress}`);
+      fastify.io.emit('user typing', { user: ipAddress, isTyping: false });
     });
   });
 });
