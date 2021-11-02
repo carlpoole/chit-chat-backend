@@ -27,13 +27,18 @@ function routes(fastify, options, done) {
     // Add message
     fastify.post("/", (request, reply) => {
         var message = request.body
-        Message.create(message, (err, message) => {
-            if(!err) {
-                reply.send(message)
-            } else {
-                reply.send({ error: err })
-            }
-        })
+        if (message && message.name && message.body) {
+            Message.create(message, (err, message) => {
+                if(!err) {
+                    fastify.io.emit('chat message', { user: message.name, msg: message.body });
+                    reply.send(message)
+                } else {
+                    reply.send({ error: err })
+                }
+            })
+        } else {
+            reply.send({ error: 'Message user and body must be provided.' })
+        }
     })
   
     // Delete message
