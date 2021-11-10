@@ -8,6 +8,8 @@ var usertyping = document.getElementById('usertyping');
 var timeout = undefined
 var randomIdentifier = randomId()
 
+var typingUsers = new Set()
+
 function typingTimeout(){ 
     socket.emit('typing', { typing: false });
 }
@@ -42,6 +44,27 @@ function displayMessage(date, user, message) {
 
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
+}
+
+function displayTyping() {
+    const tuArray = [...typingUsers]
+
+    switch(typingUsers.size) {
+        case 3:
+            usertyping.textContent = `${tuArray[0]}, ${tuArray[1]}, and ${tuArray[2]} are typing...`
+            break;
+        case 2:
+            usertyping.textContent = `${tuArray[0]} and ${tuArray[1]} are typing...`
+            break;
+        case 1:
+            usertyping.textContent = `${tuArray[0]} is typing...`
+            break;
+        case 0:
+            usertyping.textContent = ''
+            break;
+        default:
+            usertyping.textContent = "Several people are typing..."
+    }
 }
 
 (function () {
@@ -79,9 +102,13 @@ socket.on('chat message', function (msg) {
 });
 
 socket.on('user typing', function (data) {
-    if(data.isTyping && data.id != randomIdentifier) {
-        usertyping.textContent = `${data.user} is typing...`
-    } else {
-        usertyping.textContent = ''
+    if (data.id != randomIdentifier) {
+        if(data.isTyping) {
+            typingUsers.add(data.user)
+        } else {
+            typingUsers.delete(data.user)
+        }
+
+        displayTyping()
     }
 })
